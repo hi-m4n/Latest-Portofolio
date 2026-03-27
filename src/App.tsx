@@ -360,6 +360,13 @@ const Contact = () => {
                 Send Message
               </button>
             </form>
+            <form action="https://api.web3forms.com/submit" method="POST">
+               <input type="hidden" name="access_key" value="f7a36937-6acb-4321-a317-3b4230d1f3e2">
+                <input type="text" name="name" required>
+               <input type="email" name="email" required>
+               <textarea name="message" required></textarea>
+               <button type="submit">Submit Form</button>
+            </form>
           </motion.div>
         </div>
       </div>
