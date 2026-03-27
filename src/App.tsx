@@ -14,9 +14,10 @@ import {
   Code,
   Briefcase,
   User,
-  Zap
+  Zap,
+  CheckCircle
 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, FormEvent } from "react";
 import { PROJECTS, SKILLS, CONTACT_LINKS } from "./constants";
 
 const Navbar = () => {
@@ -290,6 +291,39 @@ const Projects = () => {
 };
 
 const Contact = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const object = Object.fromEntries(formData);
+    const json = JSON.stringify(object);
+
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: json,
+      });
+      const result = await response.json();
+      if (result.success) {
+        setShowSuccess(true);
+        (e.target as HTMLFormElement).reset();
+        setTimeout(() => setShowSuccess(false), 5000);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section id="contact" className="py-32 px-6 bg-atmosphere relative overflow-hidden">
       <div className="max-w-7xl mx-auto relative z-10">
@@ -331,11 +365,14 @@ const Contact = () => {
             viewport={{ once: true }}
             className="glass p-10 rounded-3xl"
           >
-            <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <input type="hidden" name="access_key" value="f7a36937-6acb-4321-a317-3b4230d1f3e2" />
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest opacity-40">Name</label>
                 <input
                   type="text"
+                  name="name"
+                  required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 focus:outline-none focus:border-accent transition-colors"
                   placeholder="Your Name"
                 />
@@ -344,6 +381,8 @@ const Contact = () => {
                 <label className="text-[10px] uppercase tracking-widest opacity-40">Email</label>
                 <input
                   type="email"
+                  name="email"
+                  required
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 focus:outline-none focus:border-accent transition-colors"
                   placeholder="your@email.com"
                 />
@@ -351,25 +390,40 @@ const Contact = () => {
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest opacity-40">Message</label>
                 <textarea
+                  name="message"
+                  required
                   rows={4}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 focus:outline-none focus:border-accent transition-colors resize-none"
                   placeholder="How can I help you?"
                 />
               </div>
-              <button className="w-full py-4 rounded-xl bg-accent text-white font-bold uppercase tracking-widest hover:bg-accent/80 transition-all duration-300 shadow-lg shadow-accent/20">
-                Send Message
+              <button 
+                type="submit" 
+                disabled={isSubmitting}
+                className="w-full py-4 rounded-xl bg-accent text-white font-bold uppercase tracking-widest hover:bg-accent/80 transition-all duration-300 shadow-lg shadow-accent/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Sending..." : "Send Message"}
               </button>
-            </form>
-            <form action="https://api.web3forms.com/submit" method="POST">
-               <input type="hidden" name="access_key" value="f7a36937-6acb-4321-a317-3b4230d1f3e2">
-                <input type="text" name="name" required>
-               <input type="email" name="email" required>
-               <textarea name="message" required></textarea>
-               <button type="submit">Submit Form</button>
             </form>
           </motion.div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] glass px-8 py-4 rounded-full flex items-center gap-3 shadow-2xl border-accent/20"
+          >
+            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center">
+              <CheckCircle className="w-5 h-5 text-accent" />
+            </div>
+            <p className="text-sm font-medium tracking-wide">Message sent successfully!</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
